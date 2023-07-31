@@ -1,6 +1,7 @@
 package chain
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -71,6 +72,7 @@ type BlockGenerator struct {
 	rejected *RejTxInfo
 	noTTE    bool // disable eviction by timeout if true
 
+	ctx              context.Context // block generation context
 	hs               component.ICompSyncRequester
 	bi               *types.BlockHeaderInfo
 	txOp             TxOp
@@ -79,11 +81,13 @@ type BlockGenerator struct {
 	maxBlockBodySize uint32
 }
 
-func NewBlockGenerator(hs component.ICompSyncRequester, bi *types.BlockHeaderInfo, bState *state.BlockState,
-	txOp TxOp, skipEmpty bool) *BlockGenerator {
+func NewBlockGenerator(hs component.ICompSyncRequester, ctx context.Context, bi *types.BlockHeaderInfo, bState *state.BlockState, txOp TxOp, skipEmpty bool) *BlockGenerator {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	return &BlockGenerator{
-		bState: bState,
-
+		bState:           bState,
+		ctx:              ctx,
 		hs:               hs,
 		bi:               bi,
 		txOp:             txOp,
