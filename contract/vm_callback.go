@@ -1533,6 +1533,37 @@ func luaCheckTimeout(service C.int) C.int {
 	return 0
 }
 
+// luaCheckInstAndTimeout checks two types of timeouts;
+// One is whether the block creation timeout is exceeded, and the other is whether
+// the transaction execution timeout is exceeded.
+//
+//export luaCheckInstAndTimeout
+func luaCheckInstAndTimeout(service C.int, inst_count C.int, used_gas C.ulonglong) C.int {
+
+	if service < BlockFactory {
+		// Originally, MaxVmService was used instead of maxContext. service
+		// value can be 2 and decremented by MaxVmService(=2) during VM loading.
+		// That means the value of service becomes zero after the latter
+		// adjustment.
+		//
+		// This make the VM check block timeout in a unwanted situation. If that
+		// happens during the chain service is connecting block, the block chain
+		// becomes out of sync.
+		service = service + C.int(maxContext)
+	}
+
+	if service != BlockFactory {
+		return 0
+	}
+	vmCtx := contexts[service]
+	var instructionCount = int(inst_count)
+	var remainedGas = uint64(used_gas)
+	if inst_count%C.int(1000000) < hookInstInterval {
+		vmLogger.Trace().Stringer("txHash", types.LogBase58(vmCtx.txHash)).Int("instructions", instructionCount).Uint64("gasRemained", remainedGas).Msg("timeout and instruction count hook")
+	}
+	return 0
+}
+
 //export luaIsFeeDelegation
 func luaIsFeeDelegation(L *LState, service C.int) (C.int, *C.char) {
 	ctx := contexts[service]

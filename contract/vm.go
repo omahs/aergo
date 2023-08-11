@@ -45,7 +45,9 @@ import (
 )
 
 const (
-	callMaxInstLimit     = C.int(5000000)
+	// this value must be same as value in vm.c
+	hookInstInterval     = C.int(1000)     // VM_HOOK_INST_INTERVAL in vm.c
+	callMaxInstLimit     = C.int(50000000) // VM_CALL_MAX_INST_LIMIT in vm.c
 	queryMaxInstLimit    = callMaxInstLimit * C.int(10)
 	dbUpdateMaxLimit     = fee.StateDbMaxUpdateSize
 	maxCallDepthOld      = 5
@@ -236,6 +238,7 @@ func (s *vmContext) IsGasSystem() bool {
 	return !s.isQuery && PubNet && s.blockInfo.ForkVersion >= 2
 }
 
+// getRemainingGas actually refresh remaining gas
 func (s *vmContext) getRemainingGas(L *LState) {
 	if s.IsGasSystem() {
 		s.remainedGas = uint64(C.lua_gasget(L))
@@ -249,7 +252,11 @@ func (s *vmContext) usedFee() *big.Int {
 	if s.IsGasSystem() {
 		usedGas := s.usedGas()
 		if ctrLgr.IsDebugEnabled() {
-			ctrLgr.Debug().Uint64("gas used", usedGas).Str("lua vm", "executed").Msg("gas information")
+			event := ctrLgr.Debug()
+			if s.curContract != nil {
+				event.Str("contract", types.EncodeAddress(s.curContract.contractId))
+			}
+			event.Uint64("gasUsed", usedGas).Str("luaVm", "executed").Stringer("txHash", types.LogBase58(s.txHash)).Msg("gas information")
 		}
 		return new(big.Int).Mul(s.bs.GasPrice, new(big.Int).SetUint64(usedGas))
 	}

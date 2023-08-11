@@ -13,7 +13,7 @@ func (ce *executor) setCountHook(limit C.int) {
 		ce.L == nil ||
 		ce.err != nil ||
 		ce.ctx.IsGasSystem() {
-		C.vm_set_timeout_hook(ce.L)
+		C.vm_set_timeout_count_hook(ce.L, limit)
 		return
 	}
 	if ce.ctx.blockInfo.ForkVersion >= 2 {

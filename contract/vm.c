@@ -15,7 +15,8 @@ const char *luaExecContext = "__exec_context__";
 const char *construct_name = "constructor";
 const char *VM_INST_LIMIT = "__INST_LIMIT__";
 const char *VM_INST_COUNT = "__INST_COUNT_";
-const int VM_TIMEOUT_INST_COUNT = 200;
+const int VM_HOOK_INST_INTERVAL = 1000;
+const int VM_CALL_MAX_INST_LIMIT = 50000000;
 
 extern int luaopen_utf8(lua_State *L);
 extern void (*lj_internal_view_start)(lua_State *);
@@ -181,7 +182,18 @@ void vm_set_count_hook(lua_State *L, int limit) {
 }
 
 static void timeout_hook(lua_State *L, lua_Debug *ar) {
-	int errCode = luaCheckTimeout(luaL_service(L));
+	int inst_count, new_inst_count, inst_limit;
+	inst_count = luaL_tminstcount(L);
+	inst_limit = luaL_tminstlimit(L);
+	new_inst_count = inst_count ;
+//	luaL_set_tminstcount(L, new_inst_count);
+
+	unsigned long long remained_gas = 0;
+	if( lua_usegas(L) ) {
+	    remained_gas =  lua_gasget(L);
+	}
+
+	int errCode = luaCheckInstAndTimeout(luaL_service(L), new_inst_count, remained_gas);
 	if (errCode == 1) {
 		luaL_setuncatchablerror(L);
 		lua_pushstring(L, ERR_BF_TIMEOUT);
@@ -193,7 +205,18 @@ static void timeout_hook(lua_State *L, lua_Debug *ar) {
 
 void vm_set_timeout_hook(lua_State *L) {
 	if (vm_is_hardfork(L, 2)) {
-		lua_sethook(L, timeout_hook, LUA_MASKCOUNT, VM_TIMEOUT_INST_COUNT);
+		lua_sethook(L, timeout_hook, LUA_MASKCOUNT, VM_HOOK_INST_INTERVAL);
+	}
+}
+
+static void check_timeout(lua_State *L, lua_Debug *ar, int inst_count, unsigned long long used_gas) {
+	int errCode = luaCheckInstAndTimeout(luaL_service(L), inst_count, used_gas);
+	if (errCode == 1) {
+		luaL_setuncatchablerror(L);
+		lua_pushstring(L, ERR_BF_TIMEOUT);
+		luaL_throwerror(L);
+	} else if (errCode == -1) {
+		luaL_error(L, "cannot find execution context");
 	}
 }
 
@@ -205,7 +228,7 @@ static void timeout_count_hook(lua_State *L, lua_Debug *ar) {
 
 	inst_count = luaL_tminstcount(L);
 	inst_limit = luaL_tminstlimit(L);
-	new_inst_count = inst_count + VM_TIMEOUT_INST_COUNT;
+	new_inst_count = inst_count + VM_HOOK_INST_INTERVAL;
 	if (new_inst_count <= 0 || new_inst_count > inst_limit) {
 		luaL_setuncatchablerror(L);
 		lua_pushstring(L, "exceeded the maximum instruction count");
@@ -217,7 +240,7 @@ static void timeout_count_hook(lua_State *L, lua_Debug *ar) {
 void vm_set_timeout_count_hook(lua_State *L, int limit) {
 	luaL_set_tminstlimit(L, limit);
 	luaL_set_tminstcount(L, 0);
-	lua_sethook(L, timeout_count_hook, LUA_MASKCOUNT, VM_TIMEOUT_INST_COUNT);
+	lua_sethook(L, timeout_count_hook, LUA_MASKCOUNT, VM_HOOK_INST_INTERVAL);
 }
 
 const char *vm_pcall(lua_State *L, int argc, int *nresult) {
