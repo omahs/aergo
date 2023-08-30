@@ -7,7 +7,9 @@ package vm_dummy
 import (
 	"fmt"
 	"github.com/aergoio/aergo/v2/contract"
+	"os"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/aergoio/aergo/v2/types"
@@ -623,4 +625,73 @@ func TestTypeBigTable(t *testing.T) {
 	}
 	err = bc.ConnectBlock(NewLuaTxCall("user1", "big20", 0, `{"Name": "inserts"}`).Fail("database or disk is full"))
 	require.NoErrorf(t, err, "failed to call tx")
+}
+
+func TestInfiniteLoopOnPubNet(t *testing.T) {
+	skipNotOnAmd64(t)
+
+	code := readLuaCode("infiniteloop.lua")
+	require.NotEmpty(t, code, "failed to read infiniteloop.lua")
+
+	bc, err := LoadDummyChain(SetTimeout(50), SetPubNet())
+	require.NoErrorf(t, err, "failed to create dummy chain")
+	defer bc.Release()
+
+	err = bc.ConnectBlock(
+		NewLuaTxAccount("user1", 1, types.Aergo),
+		NewLuaTxDeploy("user1", "loop", 0, code),
+	)
+	require.NoErrorf(t, err, "failed to connect new block")
+
+	errNotEnoughGas := types.ErrNotEnoughGas
+
+	err = bc.ConnectBlock(NewLuaTxCall("user1", "loop", 0, `{"Name":"infiniteLoop"}`))
+	require.Errorf(t, err, "expected: %v", errNotEnoughGas)
+	require.Containsf(t, err.Error(), errNotEnoughGas.Error(), "not contain not enough gas error")
+
+	err = bc.ConnectBlock(NewLuaTxCall("user1", "loop", 0, `{"Name":"catch"}`))
+	require.Errorf(t, err, "expected: %v", errNotEnoughGas)
+	require.Containsf(t, err.Error(), errNotEnoughGas.Error(), "not contain not enough gas error")
+
+	err = bc.ConnectBlock(NewLuaTxCall("user1", "loop", 0, `{"Name":"contract_catch"}`))
+	require.Errorf(t, err, "expected: %v", errNotEnoughGas)
+	require.Containsf(t, err.Error(), errNotEnoughGas.Error(), "not contain not enough gas error")
+
+	err = bc.ConnectBlock(NewLuaTxCall("user1", "loop", 0, `{"Name":"infiniteCall"}`).Fail("stack overflow"))
+	require.NoErrorf(t, err, "failed to connect new block")
+
+}
+
+func TestTypeMaxStringOnPubNet(t *testing.T) {
+	skipNotOnAmd64(t)
+
+	code := readLuaCode("type_maxstring.lua")
+	require.NotEmpty(t, code, "failed to read type_maxstring.lua")
+
+	bc, err := LoadDummyChain(SetPubNet())
+	require.NoErrorf(t, err, "failed to create dummy chain")
+	defer bc.Release()
+
+	err = bc.ConnectBlock(NewLuaTxAccount("user1", 1, types.Aergo), NewLuaTxDeploy("user1", "oom", 0, code))
+	require.NoErrorf(t, err, "failed to deploy")
+
+	errMsg := types.ErrNotEnoughGas.Error()
+	errMsg1 := "exceeded the maximum instruction count"
+	var travis bool
+	if os.Getenv("TRAVIS") == "true" {
+		travis = true
+	}
+	err = bc.ConnectBlock(NewLuaTxCall("user1", "oom", 0, `{"Name":"oom"}`))
+	require.Errorf(t, err, "expected: %s", errMsg)
+	if !strings.Contains(err.Error(), errMsg) && !strings.Contains(err.Error(), errMsg1) {
+		t.Errorf("expected [%s] or [%s] , but actually %s", errMsg, errMsg1, err)
+	}
+	err = bc.ConnectBlock(NewLuaTxCall("user1", "oom", 0, `{"Name":"p"}`))
+	if !strings.Contains(err.Error(), errMsg) && (!travis || !strings.Contains(err.Error(), errMsg1)) {
+		t.Errorf("unexpected error %s", err)
+	}
+	err = bc.ConnectBlock(NewLuaTxCall("user1", "oom", 0, `{"Name":"cp"}`))
+	if !strings.Contains(err.Error(), errMsg) && (!travis || !strings.Contains(err.Error(), errMsg1)) {
+		t.Errorf("unexpected error %s", err)
+	}
 }

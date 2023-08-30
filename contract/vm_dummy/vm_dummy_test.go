@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/aergoio/aergo/v2/fee"
 	"math/big"
 	"os"
 	"path/filepath"
@@ -908,7 +909,7 @@ func TestNDeploy(t *testing.T) {
 	require.NoErrorf(t, err, "failed to connect new block")
 }
 
-func xestInfiniteLoop(t *testing.T) {
+func TestInfiniteLoop(t *testing.T) {
 	code := readLuaCode("infiniteloop.lua")
 	require.NotEmpty(t, code, "failed to read infiniteloop.lua")
 
@@ -938,41 +939,6 @@ func xestInfiniteLoop(t *testing.T) {
 
 	err = bc.ConnectBlock(NewLuaTxCall("user1", "loop", 0, `{"Name":"infiniteCall"}`).Fail("stack overflow"))
 	require.NoErrorf(t, err, "failed to connect new block")
-}
-
-func TestInfiniteLoopOnPubNet(t *testing.T) {
-	// FIXME delete skip after gas limit patch
-	t.Skip("disabled until gas limit check is added")
-	code := readLuaCode("infiniteloop.lua")
-	require.NotEmpty(t, code, "failed to read infiniteloop.lua")
-
-	bc, err := LoadDummyChain(SetTimeout(50), SetPubNet())
-	require.NoErrorf(t, err, "failed to create dummy chain")
-	defer bc.Release()
-
-	err = bc.ConnectBlock(
-		NewLuaTxAccount("user1", 1, types.Aergo),
-		NewLuaTxDeploy("user1", "loop", 0, code),
-	)
-	require.NoErrorf(t, err, "failed to connect new block")
-
-	errTimeout := contract.VmTimeoutError{}
-
-	err = bc.ConnectBlock(NewLuaTxCall("user1", "loop", 0, `{"Name":"infiniteLoop"}`))
-	require.Errorf(t, err, "expected: %v", errTimeout)
-	require.Containsf(t, err.Error(), errTimeout.Error(), "not contain timeout error")
-
-	err = bc.ConnectBlock(NewLuaTxCall("user1", "loop", 0, `{"Name":"catch"}`))
-	require.Errorf(t, err, "expected: %v", errTimeout)
-	require.Containsf(t, err.Error(), errTimeout.Error(), "not contain timeout error")
-
-	err = bc.ConnectBlock(NewLuaTxCall("user1", "loop", 0, `{"Name":"contract_catch"}`))
-	require.Errorf(t, err, "expected: %v", errTimeout)
-	require.Containsf(t, err.Error(), errTimeout.Error(), "not contain timeout error")
-
-	err = bc.ConnectBlock(NewLuaTxCall("user1", "loop", 0, `{"Name":"infiniteCall"}`).Fail("stack overflow"))
-	require.NoErrorf(t, err, "failed to connect new block")
-
 }
 
 func TestUpdateSize(t *testing.T) {
@@ -1558,38 +1524,6 @@ func TestTypeMaxString(t *testing.T) {
 
 	err = bc.ConnectBlock(NewLuaTxCall("user1", "oom", 0, `{"Name":"cp"}`).Fail(errMsg))
 	require.NoErrorf(t, err, "failed to call tx")
-}
-
-func TestTypeMaxStringOnPubNet(t *testing.T) {
-	code := readLuaCode("type_maxstring.lua")
-	require.NotEmpty(t, code, "failed to read type_maxstring.lua")
-
-	bc, err := LoadDummyChain(SetPubNet())
-	require.NoErrorf(t, err, "failed to create dummy chain")
-	defer bc.Release()
-
-	err = bc.ConnectBlock(NewLuaTxAccount("user1", 1, types.Aergo), NewLuaTxDeploy("user1", "oom", 0, code))
-	require.NoErrorf(t, err, "failed to deploy")
-
-	errMsg := "string length overflow"
-	errMsg1 := "not enough memory"
-	var travis bool
-	if os.Getenv("TRAVIS") == "true" {
-		travis = true
-	}
-	err = bc.ConnectBlock(NewLuaTxCall("user1", "oom", 0, `{"Name":"oom"}`))
-	require.Errorf(t, err, "expected: %s", errMsg)
-	if !strings.Contains(err.Error(), errMsg) && !strings.Contains(err.Error(), errMsg1) {
-		t.Error(err)
-	}
-	err = bc.ConnectBlock(NewLuaTxCall("user1", "oom", 0, `{"Name":"p"}`))
-	if err != nil && (!travis || !strings.Contains(err.Error(), errMsg1)) {
-		t.Error(err)
-	}
-	err = bc.ConnectBlock(NewLuaTxCall("user1", "oom", 0, `{"Name":"cp"}`))
-	if err != nil && (!travis || !strings.Contains(err.Error(), errMsg1)) {
-		t.Error(err)
-	}
 }
 
 func TestTypeNsec(t *testing.T) {
@@ -2279,7 +2213,7 @@ func TestFeatureGovernance(t *testing.T) {
 	require.NoErrorf(t, err, "failed to deploy")
 
 	amount := types.NewAmount(40000, types.Aergo) // 40,000 aergo
-	err = bc.ConnectBlock(NewLuaTxCallBig("user1", "gov", amount, `{"Name": "test_gov", "Args":[]}`))
+	err = bc.ConnectBlock(NewLuaTxCallBig("user1", "gov", amount, `{"Name": "test_gov", "Args":[]}`, fee.DefaultMaxGasLimit))
 	require.NoErrorf(t, err, "failed to call tx")
 
 	oldstaking, err := bc.GetStaking("gov")

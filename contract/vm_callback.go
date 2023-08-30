@@ -1559,7 +1559,7 @@ func luaCheckInstAndTimeout(service C.int, inst_count C.int, used_gas C.ulonglon
 	var instructionCount = int(inst_count)
 	var remainedGas = uint64(used_gas)
 	if inst_count%C.int(1000000) < hookInstInterval {
-		vmLogger.Trace().Stringer("txHash", types.LogBase58(vmCtx.txHash)).Int("instructions", instructionCount).Uint64("gasRemained", remainedGas).Msg("timeout and instruction count hook")
+		vmLogger.Trace().Stringer("txHash", types.LogBase58(vmCtx.txHash)).Int("instructions", instructionCount).Uint64("gasRemained", remainedGas).Msg("instruction count check hook")
 	}
 	return 0
 }

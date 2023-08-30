@@ -16,7 +16,7 @@ const char *construct_name = "constructor";
 const char *VM_INST_LIMIT = "__INST_LIMIT__";
 const char *VM_INST_COUNT = "__INST_COUNT_";
 const int VM_HOOK_INST_INTERVAL = 1000;
-const int VM_CALL_MAX_INST_LIMIT = 50000000;
+const int VM_CALL_MAX_INST_LIMIT = 200000000;
 
 extern int luaopen_utf8(lua_State *L);
 extern void (*lj_internal_view_start)(lua_State *);

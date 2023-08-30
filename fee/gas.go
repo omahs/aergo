@@ -1,11 +1,14 @@
 package fee
 
+import "C"
 import (
 	"math"
 	"math/big"
 )
 
 const (
+	DefaultMaxGasLimit = uint64(200000000) // There are big tx call which uses about 160M gases in testnet.
+
 	txGasSize      = uint64(100000)
 	payloadGasSize = uint64(5)
 )
@@ -28,6 +31,9 @@ func MaxGasLimit(balance, gasPrice *big.Int) uint64 {
 	n := new(big.Int).Div(balance, gasPrice)
 	if n.IsUint64() {
 		gasLimit = n.Uint64()
+	}
+	if gasLimit > DefaultMaxGasLimit {
+		gasLimit = DefaultMaxGasLimit
 	}
 	return gasLimit
 }

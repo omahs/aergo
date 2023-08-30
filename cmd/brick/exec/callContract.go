@@ -91,7 +91,7 @@ func (c *callContract) Run(args string) (string, uint64, []*types.Event, error) 
 
 	formattedQuery := fmt.Sprintf("{\"name\":\"%s\",\"args\":%s}", funcName, callCode)
 
-	callTx := vm_dummy.NewLuaTxCallBig(accountName, contractName, amount, formattedQuery)
+	callTx := vm_dummy.NewLuaTxCallBig(accountName, contractName, amount, formattedQuery, 0)
 
 	logLevel := zerolog.GlobalLevel()
 

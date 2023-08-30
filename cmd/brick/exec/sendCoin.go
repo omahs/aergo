@@ -67,7 +67,7 @@ func (c *sendCoin) Run(args string) (string, uint64, []*types.Event, error) {
 
 	// assuming target is contract
 	var tx vm_dummy.LuaTxTester
-	tx = vm_dummy.NewLuaTxCallBig(senderName, receiverName, amount, "")
+	tx = vm_dummy.NewLuaTxCallBig(senderName, receiverName, amount, "", 0)
 	err := context.Get().ConnectBlock(tx)
 
 	if err != nil && strings.HasPrefix(err.Error(), "not found contract") {

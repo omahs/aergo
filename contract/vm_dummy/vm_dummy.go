@@ -4,7 +4,6 @@ package vm_dummy
 import (
 	"errors"
 	"fmt"
-	"math"
 	"math/big"
 	"os"
 	"path"
@@ -363,6 +362,7 @@ type luaTxContractCommon struct {
 	_payload    []byte
 	txId        uint64
 	feeDelegate bool
+	gasLimit    uint64
 }
 
 func (l *luaTxContractCommon) Hash() []byte {
@@ -529,9 +529,8 @@ func (l *luaTxDeploy) run(bs *state.BlockState, bc *DummyChain, bi *types.BlockH
 	return contractFrame(l, bs, bc, receiptTx,
 		func(sender, contractV *state.V, contractId types.AccountID, eContractState *state.ContractState) (string, []*types.Event, *big.Int, error) {
 			contractV.State().SqlRecoveryPoint = 1
-
 			ctx := contract.NewVmContext(bs, nil, sender, contractV, eContractState, sender.ID(), l.Hash(), bi, "", true,
-				false, contractV.State().SqlRecoveryPoint, contract.BlockFactory, l.amount(), math.MaxUint64, false)
+				false, contractV.State().SqlRecoveryPoint, contract.BlockFactory, l.amount(), getTxGasLimit(l.gasLimit), false)
 
 			rv, events, ctrFee, err := contract.Create(eContractState, l.payload(), l.recipient(), ctx)
 			if err != nil {
@@ -546,6 +545,14 @@ func (l *luaTxDeploy) run(bs *state.BlockState, bc *DummyChain, bi *types.BlockH
 	)
 }
 
+func getTxGasLimit(limit uint64) uint64 {
+	gasLimit := limit
+	if gasLimit == 0 {
+		gasLimit = fee.DefaultMaxGasLimit
+	}
+	return gasLimit
+}
+
 type luaTxCall struct {
 	luaTxContractCommon
 	expectedErr string
@@ -554,10 +561,10 @@ type luaTxCall struct {
 var _ LuaTxTester = (*luaTxCall)(nil)
 
 func NewLuaTxCall(sender, recipient string, amount uint64, payload string) *luaTxCall {
-	return NewLuaTxCallBig(sender, recipient, types.NewAmount(amount, types.Aer), payload)
+	return NewLuaTxCallBig(sender, recipient, types.NewAmount(amount, types.Aer), payload, 0)
 }
 
-func NewLuaTxCallBig(sender, recipient string, amount *big.Int, payload string) *luaTxCall {
+func NewLuaTxCallBig(sender, recipient string, amount *big.Int, payload string, gasLimit uint64) *luaTxCall {
 	return &luaTxCall{
 		luaTxContractCommon: luaTxContractCommon{
 			_sender:    contract.StrHash(sender),
@@ -565,6 +572,7 @@ func NewLuaTxCallBig(sender, recipient string, amount *big.Int, payload string) 
 			_amount:    amount,
 			_payload:   []byte(payload),
 			txId:       newTxId(),
+			gasLimit:   gasLimit,
 		},
 	}
 }
@@ -578,6 +586,7 @@ func NewLuaTxCallFeeDelegate(sender, recipient string, amount uint64, payload st
 			_payload:    []byte(payload),
 			txId:        newTxId(),
 			feeDelegate: true,
+			gasLimit:    fee.DefaultMaxGasLimit,
 		},
 	}
 }
@@ -591,7 +600,7 @@ func (l *luaTxCall) run(bs *state.BlockState, bc *DummyChain, bi *types.BlockHea
 	err := contractFrame(l, bs, bc, receiptTx,
 		func(sender, contractV *state.V, contractId types.AccountID, eContractState *state.ContractState) (string, []*types.Event, *big.Int, error) {
 			ctx := contract.NewVmContext(bs, bc, sender, contractV, eContractState, sender.ID(), l.Hash(), bi, "", true,
-				false, contractV.State().SqlRecoveryPoint, contract.BlockFactory, l.amount(), math.MaxUint64, l.feeDelegate)
+				false, contractV.State().SqlRecoveryPoint, contract.BlockFactory, l.amount(), getTxGasLimit(l.gasLimit), l.feeDelegate)
 
 			rv, events, ctrFee, err := contract.Call(eContractState, l.payload(), l.recipient(), ctx)
 			if err != nil {

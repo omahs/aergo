@@ -46,8 +46,8 @@ import (
 
 const (
 	// this value must be same as value in vm.c
-	hookInstInterval     = C.int(1000)     // VM_HOOK_INST_INTERVAL in vm.c
-	callMaxInstLimit     = C.int(50000000) // VM_CALL_MAX_INST_LIMIT in vm.c
+	hookInstInterval     = C.int(1000)      // VM_HOOK_INST_INTERVAL in vm.c
+	callMaxInstLimit     = C.int(200000000) // VM_CALL_MAX_INST_LIMIT in vm.c
 	queryMaxInstLimit    = callMaxInstLimit * C.int(10)
 	dbUpdateMaxLimit     = fee.StateDbMaxUpdateSize
 	maxCallDepthOld      = 5
