@@ -21,6 +21,7 @@ package contract
 import "C"
 import (
 	"bytes"
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -85,6 +86,9 @@ type contractInfo struct {
 	amount     *big.Int
 }
 
+// vmContext contains context datas during execution of smart contract.
+// It has both call infos which are immutable, and real time statuses
+// which are mutable during execution
 type vmContext struct {
 	curContract       *contractInfo
 	bs                *state.BlockState
@@ -95,7 +99,7 @@ type vmContext struct {
 	node              string
 	confirmed         bool
 	isQuery           bool
-	nestedView        int32
+	nestedView        int32 // nestedView indicate which parent called called the contract in view (read-only mode)
 	isFeeDelegation   bool
 	service           C.int
 	callState         map[types.AccountID]*callState
@@ -108,6 +112,7 @@ type vmContext struct {
 	traceFile         *os.File
 	gasLimit          uint64
 	remainedGas       uint64
+	txContext         context.Context
 }
 
 type recoveryEntry struct {
@@ -173,9 +178,7 @@ func getTraceFile(blkno uint64, tx []byte) *os.File {
 	return f
 }
 
-func NewVmContext(blockState *state.BlockState, cdb ChainAccessor, sender, reciever *state.V,
-	contractState *state.ContractState, senderID []byte, txHash []byte, bi *types.BlockHeaderInfo, node string, confirmed bool,
-	query bool, rp uint64, service int, amount *big.Int, gasLimit uint64, feeDelegation bool) *vmContext {
+func NewVmContext(txContext context.Context, blockState *state.BlockState, cdb ChainAccessor, sender, reciever *state.V, contractState *state.ContractState, senderID, txHash []byte, bi *types.BlockHeaderInfo, node string, confirmed, query bool, rp uint64, service int, amount *big.Int, gasLimit uint64, feeDelegation bool) *vmContext {
 
 	cs := &callState{ctrState: contractState, curState: reciever.State()}
 
@@ -193,6 +196,7 @@ func NewVmContext(blockState *state.BlockState, cdb ChainAccessor, sender, recie
 		gasLimit:        gasLimit,
 		remainedGas:     gasLimit,
 		isFeeDelegation: feeDelegation,
+		txContext:       txContext,
 	}
 	ctx.callState = make(map[types.AccountID]*callState)
 	ctx.callState[reciever.AccountID()] = cs
@@ -225,6 +229,7 @@ func NewVmContextQuery(
 		confirmed:   true,
 		blockInfo:   types.NewBlockHeaderInfo(bb),
 		isQuery:     true,
+		txContext:   context.Background(), // FIXME query also should cancel if query is too long
 	}
 
 	ctx.callState = make(map[types.AccountID]*callState)
@@ -236,7 +241,7 @@ func (s *vmContext) IsGasSystem() bool {
 	return !s.isQuery && PubNet && s.blockInfo.ForkVersion >= 2
 }
 
-func (s *vmContext) getRemainingGas(L *LState) {
+func (s *vmContext) refreshRemainingGas(L *LState) {
 	if s.IsGasSystem() {
 		s.remainedGas = uint64(C.lua_gasget(L))
 	}
@@ -370,7 +375,7 @@ func newExecutor(
 	if ctx.IsGasSystem() {
 		ce.setGas()
 		defer func() {
-			ce.getRemainingGas()
+			ce.refreshRemainingGas()
 			if ctrLgr.IsDebugEnabled() {
 				ctrLgr.Debug().Uint64("gas used", ce.ctx.usedGas()).Str("lua vm", "loaded").Msg("gas information")
 			}
@@ -563,7 +568,7 @@ func (ce *executor) call(instLimit C.int, target *LState) C.int {
 	if ce.err != nil {
 		return 0
 	}
-	defer ce.getRemainingGas()
+	defer ce.refreshRemainingGas()
 	if ce.isView == true {
 		ce.ctx.nestedView++
 		defer func() {
@@ -603,7 +608,7 @@ func (ce *executor) call(instLimit C.int, target *LState) C.int {
 	startTime := time.Now()
 	cErrMsg := C.vm_pcall(ce.L, ce.numArgs, &nret)
 	vmExecTime := time.Now().Sub(startTime).Microseconds()
-	vmLogger.Trace().Int64("execµs", vmExecTime).Stringer("txHash", types.LogBase58(ce.ctx.txHash)).Msg("tx execute time in vm")
+	vmLogger.Trace().Int64("execµs", vmExecTime).Stringer("contract", types.LogAddr(ce.ctx.curContract.contractId)).Msg("contract execute time in vm")
 	if cErrMsg != nil {
 		errMsg := C.GoString(cErrMsg)
 		if C.luaL_hassyserror(ce.L) != C.int(0) {
@@ -781,8 +786,8 @@ func (ce *executor) close() {
 	}
 }
 
-func (ce *executor) getRemainingGas() {
-	ce.ctx.getRemainingGas(ce.L)
+func (ce *executor) refreshRemainingGas() {
+	ce.ctx.refreshRemainingGas(ce.L)
 }
 
 func (ce *executor) gas() uint64 {
@@ -837,8 +842,11 @@ func Call(
 	ce := newExecutor(contract, contractAddress, ctx, &ci, ctx.curContract.amount, false, false, contractState)
 	defer ce.close()
 
+	startTime := time.Now()
 	// execute the contract call
 	ce.call(callMaxInstLimit, nil)
+	vmExecTime := time.Now().Sub(startTime).Microseconds()
+	vmLogger.Trace().Int64("execµs", vmExecTime).Stringer("txHash", types.LogBase58(ce.ctx.txHash)).Msg("tx execute time in vm")
 
 	// check if there is an error
 	err = ce.err
