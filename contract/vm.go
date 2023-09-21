@@ -54,7 +54,7 @@ const (
 	checkFeeDelegationFn = "check_delegation"
 	constructor          = "constructor"
 
-	vmTimeoutErrMsg = "[Contract.LuaCallContract] call err: contract timeout"
+	vmTimeoutErrMsg = "contract timeout of VmTimeoutError"
 )
 
 var (
@@ -621,9 +621,9 @@ func (ce *executor) call(instLimit C.int, target *LState) C.int {
 				ce.err = errors.New(errMsg)
 			}
 		}
-		ctrLgr.Debug().Err(ce.err).Str(
+		ctrLgr.Debug().Err(ce.err).Stringer(
 			"contract",
-			types.EncodeAddress(ce.ctx.curContract.contractId),
+			types.LogAddr(ce.ctx.curContract.contractId),
 		).Msg("contract is failed")
 		if target != nil {
 			if C.luaL_hasuncatchablerror(ce.L) != C.int(0) {
