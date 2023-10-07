@@ -102,7 +102,7 @@ func (sdb *ChainStateDB) SetGenesis(genesis *types.Genesis, bpInit func(*StateDB
 		}
 
 		aid := types.ToAccountID([]byte(types.AergoSystem))
-		scs, err := stateDB.GetSystemAccountState()
+		scs, err := stateDB.OpenContractStateAccount(aid)
 		if err != nil {
 			return err
 		}
