@@ -19,9 +19,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const min_version int32 = 2
-const max_version int32 = 3
-
 func TestMaxCallDepth(t *testing.T) {
 	//code := readLuaCode(t, "maxcalldepth_1.lua")
 	// this contract receives a list of contract IDs to be called
@@ -29,9 +26,7 @@ func TestMaxCallDepth(t *testing.T) {
 	// this contract stores the address of the next contract to be called
 	code3 := readLuaCode(t, "maxcalldepth_3.lua")
 
-	for version := int32(3); version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version), SetPubNet())
+	bc, err := LoadDummyChain(SetHardForkVersion(3), SetPubNet())
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -368,16 +363,12 @@ func TestMaxCallDepth(t *testing.T) {
 			}
 		}
 	}
-
-	}
 }
 
 func TestContractSystem(t *testing.T) {
 	code := readLuaCode(t, "contract_system.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -394,16 +385,12 @@ func TestContractSystem(t *testing.T) {
 	receipt := bc.GetReceipt(tx.Hash())
 	exRv := fmt.Sprintf(`["%s","6FbDRScGruVdATaNWzD51xJkTfYCVwxSZDb7gzqCLzwf","AmhNNBNY7XFk4p5ym4CJf8nTcRTEHjWzAeXJfhP71244CjBCAQU3",%d,3,999]`, StrToAddress("user1"), bc.cBlock.Header.Timestamp/1e9)
 	assert.Equal(t, exRv, receipt.GetRet(), "receipt ret error")
-
-	}
 }
 
 func TestContractHello(t *testing.T) {
 	code := readLuaCode(t, "contract_hello.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create test database")
 	defer bc.Release()
 
@@ -419,8 +406,6 @@ func TestContractHello(t *testing.T) {
 
 	receipt := bc.GetReceipt(tx.Hash())
 	assert.Equal(t, `"Hello World"`, receipt.GetRet(), "receipt ret error")
-
-	}
 }
 
 func TestContractSend(t *testing.T) {
@@ -429,9 +414,7 @@ func TestContractSend(t *testing.T) {
 	code3 := readLuaCode(t, "contract_send_3.lua")
 	code4 := readLuaCode(t, "contract_send_4.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -466,16 +449,12 @@ func TestContractSend(t *testing.T) {
 		NewLuaTxCall("user1", "test1", 0, fmt.Sprintf(`{"Name":"send", "Args":["%s"]}`, nameToAddress("user1"))),
 	)
 	assert.NoErrorf(t, err, "failed to connect new block")
-
-	}
 }
 
 func TestContractQuery(t *testing.T) {
 	code := readLuaCode(t, "contract_query.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -497,17 +476,13 @@ func TestContractQuery(t *testing.T) {
 
 	err = bc.Query("query", `{"Name":"query", "Args":["key1"]}`, "", "1")
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestContractCall(t *testing.T) {
 	code := readLuaCode(t, "contract_call_1.lua")
 	code2 := readLuaCode(t, "contract_call_2.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -549,17 +524,13 @@ func TestContractCall(t *testing.T) {
 
 	err = bc.Query("caller", `{"Name":"get", "Args":[]}`, "", "3")
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestContractPingpongCall(t *testing.T) {
 	code := readLuaCode(t, "contract_pingpongcall_1.lua")
 	code2 := readLuaCode(t, "contract_pingpongcall_2.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -581,16 +552,11 @@ func TestContractPingpongCall(t *testing.T) {
 
 	err = bc.Query("b", `{"Name":"get", "Args":[]}`, "", `"called"`)
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestRollback(t *testing.T) {
 	code := readLuaCode(t, "rollback.lua")
-
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -623,8 +589,6 @@ func TestRollback(t *testing.T) {
 
 	err = bc.Query("query", `{"Name":"query", "Args":["key1"]}`, "", "2")
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestAbi(t *testing.T) {
@@ -632,9 +596,7 @@ func TestAbi(t *testing.T) {
 	codeEmpty := readLuaCode(t, "abi_empty.lua")
 	codeLocalFunc := readLuaCode(t, "abi_localfunc.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -649,16 +611,12 @@ func TestAbi(t *testing.T) {
 	err = bc.ConnectBlock(NewLuaTxDeploy("user1", "a", 0, codeLocalFunc))
 	require.Errorf(t, err, fmt.Sprintf("expected err : %s, buf got nil", "global function expected"))
 	require.Containsf(t, err.Error(), "global function expected", "not contains error message")
-
-	}
 }
 
 func TestGetABI(t *testing.T) {
 	code := readLuaCode(t, "getabi.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -671,16 +629,12 @@ func TestGetABI(t *testing.T) {
 	jsonAbi, err := json.Marshal(abi)
 	require.NoErrorf(t, err, "failed to marshal abi")
 	require.Equalf(t, `{"version":"0.2","language":"lua","functions":[{"name":"hello","arguments":[{"name":"say"}]}],"state_variables":[{"name":"Say","type":"value"}]}`, string(jsonAbi), "not equal abi")
-
-	}
 }
 
 func TestPayable(t *testing.T) {
 	code := readLuaCode(t, "payable.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -705,16 +659,12 @@ func TestPayable(t *testing.T) {
 
 	err = bc.Query("payable", `{"Name":"load"}`, "", `"payed"`)
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestDefault(t *testing.T) {
 	code := readLuaCode(t, "default.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -736,17 +686,13 @@ func TestDefault(t *testing.T) {
 
 	err = bc.Query("default", `{"Name":"a"}`, "not found function: a", "")
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestReturn(t *testing.T) {
 	code := readLuaCode(t, "return_1.lua")
 	code2 := readLuaCode(t, "return_2.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -768,16 +714,12 @@ func TestReturn(t *testing.T) {
 
 	err = bc.Query("foo", `{"Name":"foo2", "Args":["foo314"]}`, "", `"foo314"`)
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestReturnUData(t *testing.T) {
 	code := readLuaCode(t, "return_udata.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -789,16 +731,12 @@ func TestReturnUData(t *testing.T) {
 
 	err = bc.ConnectBlock(NewLuaTxCall("user1", "rs-return", 0, `{"Name": "test_die", "Args":[]}`).Fail(`unsupport type: userdata`))
 	require.NoErrorf(t, err, "failed to connect new block")
-
-	}
 }
 
 func TestEvent(t *testing.T) {
 	code := readLuaCode(t, "event.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -810,17 +748,12 @@ func TestEvent(t *testing.T) {
 
 	err = bc.ConnectBlock(NewLuaTxCall("user1", "event", 0, `{"Name": "test_ev", "Args":[]}`))
 	require.NoErrorf(t, err, "failed to connect new block")
-
-	}
-
 }
 
 func TestView(t *testing.T) {
 	code := readLuaCode(t, "view.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -850,16 +783,12 @@ func TestView(t *testing.T) {
 
 	err = bc.ConnectBlock(NewLuaTxCall("user1", "view", 0, `{"Name": "sqltest", "Args":[]}`).Fail("not permitted in view function"))
 	require.NoErrorf(t, err, "failed to connect new block")
-
-	}
 }
 
 func TestDeploy(t *testing.T) {
 	code := readLuaCode(t, "deploy.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -911,16 +840,12 @@ func TestDeploy(t *testing.T) {
 
 	receipt = bc.GetReceipt(tx.Hash())
 	assert.Containsf(t, receipt.GetRet(), "cannot find contract", "contract Call ret error")
-
-	}
 }
 
 func TestDeploy2(t *testing.T) {
 	code := readLuaCode(t, "deploy2.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -936,17 +861,12 @@ func TestDeploy2(t *testing.T) {
 	tx := NewLuaTxCall("user1", "deploy", 0, `{"Name":"hello"}`).Fail(`not permitted state referencing at global scope`)
 	err = bc.ConnectBlock(tx)
 	require.NoErrorf(t, err, "failed to connect new block")
-
-	}
-
 }
 
 func TestNDeploy(t *testing.T) {
 	code := readLuaCode(t, "deployn.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -956,16 +876,12 @@ func TestNDeploy(t *testing.T) {
 		NewLuaTxCall("user1", "n-deploy", 200000, `{"Name":"testall"}`),
 	)
 	require.NoErrorf(t, err, "failed to connect new block")
-
-	}
 }
 
 func xestInfiniteLoop(t *testing.T) {
 	code := readLuaCode(t, "infiniteloop.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetTimeout(50), SetHardForkVersion(version))
+	bc, err := LoadDummyChain(SetTimeout(50))
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -991,16 +907,12 @@ func xestInfiniteLoop(t *testing.T) {
 
 	err = bc.ConnectBlock(NewLuaTxCall("user1", "loop", 0, `{"Name":"infiniteCall"}`).Fail("stack overflow"))
 	require.NoErrorf(t, err, "failed to connect new block")
-
-	}
 }
 
 func TestInfiniteLoopOnPubNet(t *testing.T) {
 	code := readLuaCode(t, "infiniteloop.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetTimeout(50), SetPubNet(), SetHardForkVersion(version))
+	bc, err := LoadDummyChain(SetTimeout(50), SetPubNet())
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1027,15 +939,12 @@ func TestInfiniteLoopOnPubNet(t *testing.T) {
 	err = bc.ConnectBlock(NewLuaTxCall("user1", "loop", 0, `{"Name":"infiniteCall"}`).Fail("stack overflow"))
 	require.NoErrorf(t, err, "failed to connect new block")
 
-	}
 }
 
 func TestUpdateSize(t *testing.T) {
 	code := readLuaCode(t, "updatesize.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1047,19 +956,16 @@ func TestUpdateSize(t *testing.T) {
 	errMsg := "exceeded size of updates in the state database"
 	require.Errorf(t, err, "expected: %s", errMsg)
 	require.Containsf(t, err.Error(), errMsg, "error message not same as expected")
-
-	}
 }
 
 func TestTimeoutCnt(t *testing.T) {
 	// FIXME delete skip after gas limit patch
 	t.Skip("disabled until gas limit check is added")
 	code := readLuaCode(t, "timeout_1.lua")
+
 	code2 := readLuaCode(t, "timeout_2.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetTimeout(500), SetPubNet(), SetHardForkVersion(version)) // timeout 500 milliseconds
+	bc, err := LoadDummyChain(SetTimeout(500), SetPubNet()) // timeout 500 milliseconds
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1080,16 +986,12 @@ func TestTimeoutCnt(t *testing.T) {
 
 	err = bc.ConnectBlock(NewLuaTxCall("user1", "timeout-cnt2", 0, `{"Name": "a"}`).Fail("contract timeout"))
 	require.NoErrorf(t, err, "failed to call tx")
-
-	}
 }
 
 func TestSnapshot(t *testing.T) {
 	code := readLuaCode(t, "snapshot.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1119,16 +1021,12 @@ func TestSnapshot(t *testing.T) {
 
 	err = bc.Query("snap", `{"Name":"query2", "Args":[]}`, "invalid argument at getsnap, need (state.array, index, blockheight)", "")
 	assert.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestKvstore(t *testing.T) {
 	code := readLuaCode(t, "kvstore.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1171,17 +1069,13 @@ func TestKvstore(t *testing.T) {
 
 	err = bc.Query("map", `{"Name":"getname"}`, "", `"eve2adam"`)
 	assert.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 // sql tests
 func TestSqlConstrains(t *testing.T) {
 	code := readLuaCode(t, "sql_constrains.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1196,16 +1090,12 @@ func TestSqlConstrains(t *testing.T) {
 		NewLuaTxCall("user1", "constraint", 0, `{"Name":"uniqueFail"}`).Fail("UNIQUE constraint failed: r.only"),
 	)
 	require.NoErrorf(t, err, "failed to call contract")
-
-	}
 }
 
 func TestSqlAutoincrement(t *testing.T) {
 	code := readLuaCode(t, "sql_autoincrement.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1219,16 +1109,12 @@ func TestSqlAutoincrement(t *testing.T) {
 	tx := NewLuaTxCall("user1", "auto", 0, `{"Name":"get"}`)
 	err = bc.ConnectBlock(tx)
 	require.NoErrorf(t, err, "failed to call tx")
-
-	}
 }
 
 func TestSqlOnConflict(t *testing.T) {
 	code := readLuaCode(t, "sql_onconflict.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1270,16 +1156,12 @@ func TestSqlOnConflict(t *testing.T) {
 
 	err = bc.Query("on_conflict", `{"name":"get"}`, "", `[1,2,3,4,5,6,7]`)
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestSqlDupCol(t *testing.T) {
 	code := readLuaCode(t, "sql_dupcol.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1291,16 +1173,12 @@ func TestSqlDupCol(t *testing.T) {
 
 	err = bc.Query("dup_col", `{"name":"get"}`, `too many duplicate column name "1+1", max: 5`)
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestSqlVmSimple(t *testing.T) {
 	code := readLuaCode(t, "sql_vm_simple.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1340,16 +1218,12 @@ func TestSqlVmSimple(t *testing.T) {
 	// there is only a genesis block
 	err = bc.Query("simple-query", `{"Name": "count", "Args":[]}`, "not found contract", "")
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestSqlVmFail(t *testing.T) {
 	code := readLuaCode(t, "sql_vm_fail.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1381,16 +1255,12 @@ func TestSqlVmFail(t *testing.T) {
 
 	err = bc.Query("fail", `{"Name":"get"}`, "", "7")
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestSqlVmPubNet(t *testing.T) {
 	code := readLuaCode(t, "sql_vm_pubnet.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetPubNet(), SetHardForkVersion(version))
+	bc, err := LoadDummyChain(SetPubNet())
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1402,16 +1272,12 @@ func TestSqlVmPubNet(t *testing.T) {
 
 	err = bc.ConnectBlock(NewLuaTxCall("user1", "simple-query", 0, `{"Name": "createAndInsert", "Args":[]}`).Fail(`attempt to index global 'db'`))
 	require.NoErrorf(t, err, "failed to call tx")
-
-	}
 }
 
 func TestSqlVmDateTime(t *testing.T) {
 	code := readLuaCode(t, "sql_vm_datetime.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1430,16 +1296,12 @@ func TestSqlVmDateTime(t *testing.T) {
 
 	err = bc.Query("datetime", `{"Name":"get"}`, "", `[{"bool":0},{"bool":1},{"bool":1,"date":"1970-01-01 02:46:40"},{"bool":0,"date":"2004-11-23"}]`)
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestSqlVmCustomer(t *testing.T) {
 	code := readLuaCode(t, "sql_vm_customer.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1473,16 +1335,12 @@ func TestSqlVmCustomer(t *testing.T) {
 
 	err = bc.Query("customer", `{"Name":"query", "Args":["id2"]}`, "", `{}`)
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestSqlVmDataType(t *testing.T) {
 	code := readLuaCode(t, "sql_vm_datatype.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1508,16 +1366,12 @@ func TestSqlVmDataType(t *testing.T) {
 
 	err = bc.Query("datatype", `{"Name":"queryGroupByBlockheight1"}`, "", `[{"avg_float1":3.14,"blockheight1":2,"count1":3,"sum_int1":3},{"avg_float1":3.14,"blockheight1":3,"count1":1,"sum_int1":1}]`)
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestSqlVmFunction(t *testing.T) {
 	code := readLuaCode(t, "sql_vm_function.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1535,16 +1389,12 @@ func TestSqlVmFunction(t *testing.T) {
 
 	err = bc.Query("fns", `{"Name":"typeof_func"}`, "", `["integer","text","real","null"]`)
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestSqlVmBook(t *testing.T) {
 	code := readLuaCode(t, "sql_vm_book.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1563,16 +1413,12 @@ func TestSqlVmBook(t *testing.T) {
 
 	err = bc.Query("book", `{"Name":"viewCopyBook"}`, "", `[100,"value=1"]`)
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestSqlVmDateformat(t *testing.T) {
 	code := readLuaCode(t, "sql_vm_dateformat.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1585,16 +1431,12 @@ func TestSqlVmDateformat(t *testing.T) {
 
 	err = bc.Query("data_format", `{"Name":"get"}`, "", `[["2004-10-24","2004-10-24 11:11:11","20041024111111"],["2018-05-28","2018-05-28 10:45:38","20180528104538"]]`)
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestSqlVmRecursiveData(t *testing.T) {
 	code := readLuaCode(t, "sql_vm_recursivedata.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1606,16 +1448,12 @@ func TestSqlVmRecursiveData(t *testing.T) {
 	)
 	require.Errorf(t, err, "expect err")
 	require.Equalf(t, "nested table error", err.Error(), "expect err")
-
-	}
 }
 
 func TestSqlJdbc(t *testing.T) {
 	code := readLuaCode(t, "sql_jdbc.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1644,16 +1482,12 @@ func TestSqlJdbc(t *testing.T) {
 	err = bc.Query("jdbc", `{"Name":"queryS", "Args":["2", "select a,b,c from total"]}`, "",
 		`{"colcnt":3,"colmetas":{"colcnt":3,"decltypes":["int","int","text"],"names":["a","b","c"]},"data":[[1,{},"2"],[2,2,"3"],[3,2,"3"],[4,2,"3"],[5,2,"3"],[6,2,"3"],[7,2,"3"]],"rowcnt":7,"snap":"3"}`)
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestTypeMaxString(t *testing.T) {
 	code := readLuaCode(t, "type_maxstring.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1669,16 +1503,12 @@ func TestTypeMaxString(t *testing.T) {
 
 	err = bc.ConnectBlock(NewLuaTxCall("user1", "oom", 0, `{"Name":"cp"}`).Fail(errMsg))
 	require.NoErrorf(t, err, "failed to call tx")
-
-	}
 }
 
 func TestTypeMaxStringOnPubNet(t *testing.T) {
 	code := readLuaCode(t, "type_maxstring.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version), SetPubNet())
+	bc, err := LoadDummyChain(SetPubNet())
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1704,16 +1534,12 @@ func TestTypeMaxStringOnPubNet(t *testing.T) {
 	if err != nil && (!travis || !strings.Contains(err.Error(), errMsg1)) {
 		t.Error(err)
 	}
-
-	}
 }
 
 func TestTypeNsec(t *testing.T) {
 	code := readLuaCode(t, "type_nsec.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1722,16 +1548,12 @@ func TestTypeNsec(t *testing.T) {
 
 	err = bc.ConnectBlock(NewLuaTxCall("user1", "nsec", 0, `{"Name": "test_nsec"}`).Fail(`attempt to call global 'nsec' (a nil value)`))
 	require.NoErrorf(t, err, "failed to call tx")
-
-	}
 }
 
 func TestTypeUtf(t *testing.T) {
 	code := readLuaCode(t, "type_utf.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1746,17 +1568,13 @@ func TestTypeUtf(t *testing.T) {
 
 	err = bc.Query("utf", `{"Name":"query3"}`, "bignum not allowed negative value", "")
 	assert.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestTypeDupVar(t *testing.T) {
 	code := readLuaCode(t, "type_dupvar_1.lua")
 	code2 := readLuaCode(t, "type_dupvar_2.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1773,16 +1591,12 @@ func TestTypeDupVar(t *testing.T) {
 	require.NoErrorf(t, err, "failed to deploy")
 	err = bc.ConnectBlock(NewLuaTxCall("user1", "dupVar1", 0, `{"Name": "Work"}`).Fail("duplicated variable: 'Var1'"))
 	require.NoErrorf(t, err, "failed to call tx")
-
-	}
 }
 
 func TestTypeByteKey(t *testing.T) {
 	code := readLuaCode(t, "type_bytekey.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1794,8 +1608,6 @@ func TestTypeByteKey(t *testing.T) {
 
 	err = bc.Query("bk", `{"Name":"getcre"}`, "", fmt.Sprintf(`"%s"`, nameToAddress("user1")))
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestTypeArray(t *testing.T) {
@@ -1803,9 +1615,7 @@ func TestTypeArray(t *testing.T) {
 
 	code2 := readLuaCode(t, "type_array_overflow.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1846,17 +1656,14 @@ func TestTypeArray(t *testing.T) {
 	errMsg := "integer expected, got number"
 	require.Errorf(t, err, "expect no error")
 	require.Containsf(t, err.Error(), errMsg, "err not match")
-
-	}
 }
 
 func TestTypeMultiArray(t *testing.T) {
 	code := readLuaCode(t, "type_multiarray_1.lua")
+
 	code2 := readLuaCode(t, "type_multiarray_2.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1899,16 +1706,12 @@ func TestTypeMultiArray(t *testing.T) {
 
 	err = bc.Query("ma", `{"Name":"query", "Args":[]}`, "", `["A","B","C","D","A","B","v3"]`)
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestTypeArrayArg(t *testing.T) {
 	code := readLuaCode(t, "type_arrayarg.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -1942,16 +1745,12 @@ func TestTypeArrayArg(t *testing.T) {
 ]}`, "", `[[{"age":50,"name":"wook"},{"age":42,"name":"hook"}],{"age":39,"name":"user2","scores":[10,20,30,40,50]},"hmm..."]`,
 	)
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestTypeMapKey(t *testing.T) {
 	code := readLuaCode(t, "type_mapkey.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -2004,16 +1803,12 @@ func TestTypeMapKey(t *testing.T) {
 
 	err = bc.Query("x", `{"Name":"getCount", "Args":["third"]}`, "", "30")
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestTypeStateVarFieldUpdate(t *testing.T) {
 	code := readLuaCode(t, "type_statevarfieldupdate.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -2031,16 +1826,12 @@ func TestTypeStateVarFieldUpdate(t *testing.T) {
 
 	err = bc.Query("c", `{"Name":"GetPerson"}`, "", `{"address":"blahblah...","age":10,"name":"user2"}`)
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestTypeDatetime(t *testing.T) {
 	code := readLuaCode(t, "type_datetime.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -2064,17 +1855,14 @@ func TestTypeDatetime(t *testing.T) {
 
 	err = bc.Query("datetime", `{"Name": "Difftime"}`, "", `2890`)
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestTypeDynamicArray(t *testing.T) {
 	code := readLuaCode(t, "type_dynamicarray_zerolen.lua")
+
 	code2 := readLuaCode(t, "type_dynamicarray.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -2121,16 +1909,12 @@ func TestTypeDynamicArray(t *testing.T) {
 
 	err = bc.Query("dArr", `{"Name": "Get", "Args": [3]}`, "", "50")
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestTypeCrypto(t *testing.T) {
 	code := readLuaCode(t, "type_crypto.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -2154,17 +1938,13 @@ func TestTypeCrypto(t *testing.T) {
 
 	err = bc.Query("crypto", `{"Name": "keccak256", "Args" : ["0x616572676F"]}`, "", `"0xe98bb03ab37161f8bbfe131f711dcccf3002a9cd9ec31bbd52edf181f7ab09a0"`)
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestTypeBignum(t *testing.T) {
 	bignum := readLuaCode(t, "type_bignum.lua")
 	callee := readLuaCode(t, "type_bignum_callee.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -2213,8 +1993,6 @@ func TestTypeBignum(t *testing.T) {
 
 	err = bc.Query("bigNum", `{"Name":"byteBignum"}`, "", `{"_bignum":"177"}`)
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func checkRandomIntValue(v string, min, max int) error {
@@ -2228,9 +2006,7 @@ func checkRandomIntValue(v string, min, max int) error {
 func TestTypeRandom(t *testing.T) {
 	code := readLuaCode(t, "type_random.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -2270,16 +2046,12 @@ func TestTypeRandom(t *testing.T) {
 
 	err = bc.Query("random", `{"Name": "random", "Args":[3,1]}`, "system.random: the maximum value must be greater than the minimum value", "")
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestTypeSparseTable(t *testing.T) {
 	code := readLuaCode(t, "type_sparsetable.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -2289,16 +2061,12 @@ func TestTypeSparseTable(t *testing.T) {
 
 	receipt := bc.GetReceipt(tx.Hash())
 	require.Equalf(t, `1`, receipt.GetRet(), "contract Call ret error")
-
-	}
 }
 
 func TestTypeJson(t *testing.T) {
 	code := readLuaCode(t, "type_json.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -2358,17 +2126,13 @@ func TestTypeJson(t *testing.T) {
 
 	err = bc.ConnectBlock(NewLuaTxCall("user1", "json", 0, `{"Name":"set", "Args":["{\"key1\":[1,2,3], \"key1\":5}}"]}`).Fail("not proper json format"))
 	require.NoErrorf(t, err, "failed to call tx")
-
-	}
 }
 
 // feature tests
 func TestFeatureVote(t *testing.T) {
 	code := readLuaCode(t, "feature_vote.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -2423,16 +2187,12 @@ func TestFeatureVote(t *testing.T) {
 
 	err = bc.Query("vote", `{"Name":"getCandidates"}`, "", `[{"count":"2","id":0,"name":"candidate1"},{"count":"0","id":1,"name":"candidate2"},{"count":"0","id":2,"name":"candidate3"}]`)
 	require.NoErrorf(t, err, "failed to query")
-
-	}
 }
 
 func TestFeatureGovernance(t *testing.T) {
 	code := readLuaCode(t, "feature_governance.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -2473,8 +2233,6 @@ func TestFeatureGovernance(t *testing.T) {
 
 	require.Equalf(t, oldstaking.Amount, newstaking.Amount, "pcall error, staking amount should be same")
 	require.Equalf(t, oldgov.GetBalance(), newgov.GetBalance(), "pcall error, gov balance should be same")
-
-	}
 }
 
 func TestFeaturePcallRollback(t *testing.T) {
@@ -2482,9 +2240,7 @@ func TestFeaturePcallRollback(t *testing.T) {
 	code2 := readLuaCode(t, "feature_pcallrollback_2.lua")
 	code3 := readLuaCode(t, "feature_pcallrollback_3.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -2520,7 +2276,7 @@ func TestFeaturePcallRollback(t *testing.T) {
 	receipt := bc.GetReceipt(tx.Hash())
 	require.Equalf(t, "\""+nameToAddress("user1")+"\"", receipt.GetRet(), "contract Call ret error")
 
-	bc, err = LoadDummyChain(SetHardForkVersion(version))
+	bc, err = LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -2555,16 +2311,12 @@ func TestFeaturePcallRollback(t *testing.T) {
 	state, err = bc.GetAccountState("bong")
 	require.NoErrorf(t, err, "failed to get account state")
 	assert.Equal(t, int64(3), state.GetBalanceBigInt().Int64(), "balance error")
-
-	}
 }
 
 func TestFeaturePcallNested(t *testing.T) {
 	code := readLuaCode(t, "feature_pcallnested.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain()
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -2587,16 +2339,12 @@ func TestFeaturePcallNested(t *testing.T) {
 	state, err := bc.GetAccountState("bong")
 	require.NoErrorf(t, err, "failed to get account state")
 	assert.Equal(t, int64(types.Aergo), state.GetBalanceBigInt().Int64(), "balance error")
-
-	}
 }
 
 func TestFeatureLuaCryptoVerifyProof(t *testing.T) {
 	code := readLuaCode(t, "feature_luacryptoverifyproof.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetHardForkVersion(version))
+	bc, err := LoadDummyChain(SetPubNet())
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -2609,16 +2357,13 @@ func TestFeatureLuaCryptoVerifyProof(t *testing.T) {
 	err = bc.Query("eth", `{"Name":"verifyProofHex"}`, "", `true`)
 	require.NoErrorf(t, err, "failed to query")
 
-	}
 }
 
 func TestFeatureFeeDelegation(t *testing.T) {
 	code := readLuaCode(t, "feature_feedelegation_1.lua")
 	code2 := readLuaCode(t, "feature_feedelegation_2.lua")
 
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(SetPubNet(), SetHardForkVersion(version))
+	bc, err := LoadDummyChain(SetPubNet())
 	require.NoErrorf(t, err, "failed to create dummy chain")
 	defer bc.Release()
 
@@ -2659,8 +2404,6 @@ func TestFeatureFeeDelegation(t *testing.T) {
 	err = bc.ConnectBlock(NewLuaTxDeploy("user1", "fd2", 0, code2))
 	require.Errorf(t, err, "expect error")
 	require.Containsf(t, err.Error(), "no 'check_delegation' function", "invalid error message")
-
-	}
 }
 
 /*
@@ -2684,9 +2427,7 @@ func TestFeatureFeeDelegationLoop(t *testing.T) {
     abi.payable(default)
 	abi.fee_delegation(query_no)
 `
-	for version := min_version; version <= max_version; version++ {
-
-	bc, err := LoadDummyChain(OnPubNet, SetHardForkVersion(version))
+	bc, err := LoadDummyChain(OnPubNet)
 	if err != nil {
 		t.Errorf("failed to create test database: %v", err)
 	}
