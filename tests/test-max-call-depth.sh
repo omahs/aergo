@@ -1,8 +1,6 @@
 set -e
 source common.sh
 
-fork_version=$1
-
 
 # deploy 66 identical contracts using test-max-call-depth-2.lua
 # and store the returned addresses in an array
@@ -15,13 +13,13 @@ declare -a addresses
 account_state=$(../bin/aergocli getstate --address AmPpcKvToDCUkhT1FJjdbNvR4kNDhLFJGHkSqfjWe3QmHm96qv4R)
 nonce=$(echo $account_state | jq .nonce | sed 's/"//g')
 
-get_deploy_args test-max-call-depth-2.lua $fork_version
+../bin/aergoluac --payload test-max-call-depth-2.lua > payload.out
 
 for i in {1..66}
 do
   txhash=$(../bin/aergocli --keystore . --password bmttest --nonce $(($nonce+$i)) \
     contract deploy AmPpcKvToDCUkhT1FJjdbNvR4kNDhLFJGHkSqfjWe3QmHm96qv4R \
-    $deploy_args | jq .hash | sed 's/"//g')
+    --payload `cat payload.out` | jq .hash | sed 's/"//g')
 
   txhashes[$i]=$txhash
 done
@@ -138,7 +136,7 @@ echo "-- deploy 66 contracts --"
 account_state=$(../bin/aergocli getstate --address AmPpcKvToDCUkhT1FJjdbNvR4kNDhLFJGHkSqfjWe3QmHm96qv4R)
 nonce=$(echo $account_state | jq .nonce | sed 's/"//g')
 
-get_deploy_args test-max-call-depth-3.lua $fork_version
+../bin/aergoluac --payload test-max-call-depth-3.lua > payload.out
 
 declare -a txhashes
 declare -a addresses
@@ -147,7 +145,7 @@ for i in {1..66}
 do
   txhash=$(../bin/aergocli --keystore . --password bmttest --nonce $(($nonce+$i)) \
     contract deploy AmPpcKvToDCUkhT1FJjdbNvR4kNDhLFJGHkSqfjWe3QmHm96qv4R \
-    $deploy_args | jq .hash | sed 's/"//g')
+    --payload `cat payload.out` | jq .hash | sed 's/"//g')
 
   txhashes[$i]=$txhash
 done
@@ -281,7 +279,7 @@ echo "-- deploy 4 contracts --"
 account_state=$(../bin/aergocli getstate --address AmPpcKvToDCUkhT1FJjdbNvR4kNDhLFJGHkSqfjWe3QmHm96qv4R)
 nonce=$(echo $account_state | jq .nonce | sed 's/"//g')
 
-get_deploy_args test-max-call-depth-2.lua $fork_version
+../bin/aergoluac --payload test-max-call-depth-2.lua > payload.out
 
 declare -a txhashes
 declare -a addresses
@@ -290,7 +288,7 @@ for i in {1..4}
 do
   txhash=$(../bin/aergocli --keystore . --password bmttest --nonce $(($nonce+$i)) \
     contract deploy AmPpcKvToDCUkhT1FJjdbNvR4kNDhLFJGHkSqfjWe3QmHm96qv4R \
-    $deploy_args | jq .hash | sed 's/"//g')
+    --payload `cat payload.out` | jq .hash | sed 's/"//g')
 
   txhashes[$i]=$txhash
 done
@@ -419,7 +417,7 @@ echo "-- deploy 2 contracts --"
 account_state=$(../bin/aergocli getstate --address AmPpcKvToDCUkhT1FJjdbNvR4kNDhLFJGHkSqfjWe3QmHm96qv4R)
 nonce=$(echo $account_state | jq .nonce | sed 's/"//g')
 
-get_deploy_args test-max-call-depth-2.lua $fork_version
+../bin/aergoluac --payload test-max-call-depth-2.lua > payload.out
 
 declare -a txhashes
 declare -a addresses
@@ -428,7 +426,7 @@ for i in {1..2}
 do
   txhash=$(../bin/aergocli --keystore . --password bmttest --nonce $(($nonce+$i)) \
     contract deploy AmPpcKvToDCUkhT1FJjdbNvR4kNDhLFJGHkSqfjWe3QmHm96qv4R \
-    $deploy_args | jq .hash | sed 's/"//g')
+    --payload `cat payload.out` | jq .hash | sed 's/"//g')
 
   txhashes[$i]=$txhash
 done

@@ -6,7 +6,11 @@ fork_version=$1
 
 echo "-- deploy --"
 
-deploy ../contract/vm_dummy/test_files/gas_bf.lua $fork_version
+../bin/aergoluac --payload ../contract/vm_dummy/test_files/gas_bf.lua > payload.out
+
+txhash=$(../bin/aergocli --keystore . --password bmttest \
+    contract deploy AmPpcKvToDCUkhT1FJjdbNvR4kNDhLFJGHkSqfjWe3QmHm96qv4R \
+    --payload `cat payload.out` | jq .hash | sed 's/"//g')
 
 get_receipt $txhash
 
